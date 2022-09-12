@@ -1,0 +1,25 @@
+{
+  "name": "@bendn/stockfish.gd",
+  "version": "1.0.1",
+  "description": "godot stockfish",
+  "main": "stockfish_loader.gd",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bend-n/stockfish.gd.git"
+  },
+  "keywords": [
+    "godot",
+    "godot-engine",
+    "stockfish",
+    "chess"
+  ],
+  "author": "bendn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bend-n/stockfish.gd/issues"
+  },
+  "homepage": "https://github.com/bend-n/stockfish.gd#readme"
+}

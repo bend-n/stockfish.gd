@@ -1,0 +1,7 @@
+.vscode/
+.import/
+*.dblite
+*.os
+.gdignore
+exports/
+web/
