@@ -25,12 +25,62 @@ func is_supported() -> bool:
 class Stockfish:
 	extends Reference
 
+	var game: Chess setget set_game
+	var sent_isready := false
+
 	signal engine_ready
-	signal data_received
+	signal line_recieved
 	signal load_failed
 
-	func run_command(cmd: String) -> void:
-		pass
+	# @override
+	func send_line(cmd: String) -> void:
+		print("%s --> stockfish" % cmd)
+
+	func _init() -> void:
+		connect("line_recieved", self, "_line_recieved")
+
+	func set_game(new_game: Chess) -> void:
+		game = new_game
+		send_line("ucinewgame")
+		_position()
+
+	func _position():
+		var command := PoolStringArray(["position", "startpos"])
+
+		if game.__history:
+			command.append("moves")
+			for move in game.__history:
+				command.append(Chess.move_to_uci(move))
+
+		send_line(command.join(" "))
+
+	func _line_recieved(line: String) -> void:
+		if line.begins_with("info "):
+			prints("(stockfish)", line)
+		elif line.begins_with("bestmove "):
+			parse_bestmove(line.split(" ", true, 1)[1])
+		elif (sent_isready) && (line == "readyok" || line.begins_with("Stockfish [commit: ")):
+			sent_isready = false
+			emit_signal("engine_ready")
+		else:
+			push_error("unexpected output: %s" % line)
+
+	func parse_bestmove(args: String) -> void:
+		var tokens = args.split(" ")
+		if tokens and not tokens[0] in ["(none)", "NULL"]:
+			if game.move(tokens[0]):
+				var bm = game.undo()
+				emit_signal("bestmove", bm)
+		emit_signal("bestmove", null)
+
+	func go(depth: int = 15):
+		var command := PoolStringArray(["go"])
+		command.append("depth")
+		command.append(str(depth))
+		send_line(command.join(" "))
+
+	func stop():
+		send_line("stop")
 
 
 class JSStockfish:
@@ -38,27 +88,21 @@ class JSStockfish:
 
 	var data_recieved_callback := JavaScript.create_callback(self, "data_recieved")
 	var load_failed_callback := JavaScript.create_callback(self, "load_failed")
-	var ready_callback := JavaScript.create_callback(self, "ready")
 
 	func _init() -> void:
+		sent_isready = true
 		JavaScript.get_interface("window").stockfish_data_recieved = data_recieved_callback
 		JavaScript.get_interface("window").stockfish_failed_load = load_failed_callback
-		JavaScript.get_interface("window").stockfish_ready = ready_callback
 
-	func run_command(cmd: String) -> void:
+	func send_line(cmd: String) -> void:
+		.send_line(cmd)
 		JavaScript.eval("window.stockfishCommand('%s')" % cmd)
 
 	# js callback arguments are in arrays. i guess its so that you can call functions with less args then they want?
-	func data_recieved(data:Array) -> void:
-		emit_signal("data_received", data[0])
-		print(data[0])
+	func data_recieved(data: Array) -> void:
+		emit_signal("line_recieved", data[0])
 
 	# if _data is omitted, it will not work
-	func load_failed(_data:Array) -> void:
+	func load_failed(_data: Array) -> void:
 		emit_signal("load_failed")
 		printerr("load failed")
-	
-	#          ditto
-	func ready(_data:Array) -> void:
-		emit_signal("engine_ready")
-

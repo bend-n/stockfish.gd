@@ -9,12 +9,30 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Resource",
+"class": "Chess",
+"language": "GDScript",
+"path": "res://addons/stockfish.gd/chess.gd"
+}, {
+"base": "Reference",
+"class": "FEN",
+"language": "GDScript",
+"path": "res://addons/stockfish.gd/fen.gd"
+}, {
+"base": "Reference",
+"class": "PGN",
+"language": "GDScript",
+"path": "res://addons/stockfish.gd/pgn.gd"
+}, {
 "base": "Reference",
 "class": "StockfishLoader",
 "language": "GDScript",
 "path": "res://addons/stockfish.gd/stockfish_loader.gd"
 } ]
 _global_script_class_icons={
+"Chess": "",
+"FEN": "",
+"PGN": "",
 "StockfishLoader": ""
 }
 

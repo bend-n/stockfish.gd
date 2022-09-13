@@ -3,17 +3,21 @@
 set -e
 
 function install_libs() {
-    mkdir lib/
-    wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.js" -O lib/stockfish.js &
-    wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.worker.js" -O lib/stockfish.worker.js &
-    wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.wasm" -O lib/stockfish.wasm &
-    wget -nv "https://raw.githubusercontent.com/hi-ogawa/stockfish-nnue-wasm-demo/master/public/serve.json" -O serve.json &
-    wait
+    if [[ ! -d /tmp/stockfish_libs ]]; then
+        mkdir /tmp/stockfish_libs
+        wget -nv "https://raw.githubusercontent.com/hi-ogawa/stockfish-nnue-wasm-demo/master/public/serve.json" -O /tmp/serve.json &
+        wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.js" -O /tmp/stockfish_libs/stockfish.js &
+        wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.worker.js" -O /tmp/stockfish_libs/stockfish.worker.js &
+        wget -nv "https://cdn.jsdelivr.net/npm/stockfish-nnue.wasm/stockfish.wasm" -O /tmp/stockfish_libs/stockfish.wasm &
+        wait
+    fi
+    cp /tmp/serve.json serve.json
+    cp -r /tmp/stockfish_libs/ lib/
 }
 
 [[ -d exports ]] && rm -rf exports
 mkdir exports
-[[ -f web/load.js ]] && uglifyjs web/load.js | tr "\"" "'" >addons/stockfish.gd/load.js
+[[ -f web/load.js ]] && uglifyjs web/load.js >addons/stockfish.gd/load.js
 godot --no-window --export "HTML5" exports/index.html
 cd exports
 install_libs
