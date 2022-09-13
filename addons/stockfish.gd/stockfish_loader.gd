@@ -33,6 +33,7 @@ class Stockfish:
 	signal engine_ready
 	signal line_recieved
 	signal load_failed
+	signal bestmove
 
 	func send_line(cmd: String) -> void:
 		if not engine_ready:
