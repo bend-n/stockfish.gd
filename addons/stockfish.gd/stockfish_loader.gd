@@ -27,17 +27,33 @@ class Stockfish:
 
 	var game: Chess setget set_game
 	var sent_isready := false
+	var engine_ready := false
+	var call_queue := PoolStringArray()
 
 	signal engine_ready
 	signal line_recieved
 	signal load_failed
 
-	# @override
 	func send_line(cmd: String) -> void:
+		if not engine_ready:
+			call_queue.append(cmd)
+			return
 		print("%s --> stockfish" % cmd)
+		_send_line(cmd)
+
+	# @override
+	func _send_line(cmd: String) -> void:
+		pass
 
 	func _init() -> void:
 		connect("line_recieved", self, "_line_recieved")
+		connect("engine_ready", self, "_engine_ready")
+
+	func _engine_ready() -> void:
+		engine_ready = true
+		for call in call_queue:
+			send_line(call)
+		call_queue.resize(0)
 
 	func set_game(new_game: Chess) -> void:
 		game = new_game
@@ -94,8 +110,7 @@ class JSStockfish:
 		JavaScript.get_interface("window").stockfish_data_recieved = data_recieved_callback
 		JavaScript.get_interface("window").stockfish_failed_load = load_failed_callback
 
-	func send_line(cmd: String) -> void:
-		.send_line(cmd)
+	func _send_line(cmd: String) -> void:
 		JavaScript.eval("window.stockfishCommand('%s')" % cmd)
 
 	# js callback arguments are in arrays. i guess its so that you can call functions with less args then they want?

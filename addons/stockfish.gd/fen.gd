@@ -1,11 +1,13 @@
 extends Reference
 class_name FEN
 
-var reg: = RegEx.new()
-var reg_src:= "^(?<pieces>([pnbrqkPNBRQK1-8]{1,8}/?){8})\\s+(?<turn>b|w)\\s+(?<castling>-|K?Q?k?q?)\\s+(?<enpassant>-|[a-h][3-6])\\s+(?<halfmove>\\d+)\\s+(?<fullmove>\\d+)"
+var reg := RegEx.new()
+var reg_src := "^(?<pieces>([pnbrqkPNBRQK1-8]{1,8}/?){8})\\s+(?<turn>b|w)\\s+(?<castling>-|K?Q?k?q?)\\s+(?<enpassant>-|[a-h][3-6])\\s+(?<halfmove>\\d+)\\s+(?<fullmove>\\d+)"
+
 
 func _init() -> void:
 	reg.compile(reg_src)
+
 
 func parse(fen: String) -> Dictionary:
 	var res = reg.search(fen)

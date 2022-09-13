@@ -7,6 +7,7 @@ var movetextex = compile(
 var tagex = compile('^\\[([A-Za-z0-9_]+)\\s+"([^\\r]*)"\\]\\s*$')
 var tagnameex = compile("^[A-Za-z0-9_]+\\Z")
 
+
 static func compile(src: String) -> RegEx:
 	var regex := RegEx.new()
 	regex.compile(src)
