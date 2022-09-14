@@ -1,4 +1,4 @@
-extends Resource
+extends Reference
 class_name Chess
 # ported from https://github.com/jhlywa/chess.js
 const SYMBOLS := "pnbrqkPNBRQK"
@@ -1231,7 +1231,7 @@ func move(move, sloppy := false) -> Dictionary:
 
 
 static func move_to_uci(move: Dictionary) -> String:
-	if move.promotion:
+	if move.get("promotion", false):
 		return algebraic(move.from) + algebraic(move.to) + move.promotion
 	else:
 		return algebraic(move.from) + algebraic(move.to)

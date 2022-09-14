@@ -29,6 +29,7 @@ class Stockfish:
 	var sent_isready := false
 	var engine_ready := false
 	var call_queue := PoolStringArray()
+	var searching_bestmove := false
 
 	signal engine_ready
 	signal line_recieved
@@ -39,7 +40,7 @@ class Stockfish:
 		if not engine_ready:
 			call_queue.append(cmd)
 			return
-		print("%s --> stockfish" % cmd)
+		dbg_prints("%s --> stockfish" % cmd)
 		_send_line(cmd)
 
 	# @override
@@ -49,6 +50,10 @@ class Stockfish:
 	func _init() -> void:
 		connect("line_recieved", self, "_line_recieved")
 		connect("engine_ready", self, "_engine_ready")
+
+	func dbg_prints(a1 := "", a2 := "") -> void:
+		if OS.is_debug_build():
+			prints(a1, a2)
 
 	func _engine_ready() -> void:
 		engine_ready = true
@@ -63,18 +68,18 @@ class Stockfish:
 
 	func _position():
 		var command := PoolStringArray(["position", "startpos"])
-
 		if game.__history:
 			command.append("moves")
-			for move in game.__history:
-				command.append(Chess.move_to_uci(move))
+			for history in game.__history:
+				command.append(Chess.move_to_uci(history.move))
 
 		send_line(command.join(" "))
 
 	func _line_recieved(line: String) -> void:
 		if line.begins_with("info "):
-			prints("(stockfish)", line)
-		elif line.begins_with("bestmove "):
+			dbg_prints("(stockfish)", line)
+		elif searching_bestmove and line.begins_with("bestmove "):
+			searching_bestmove = false
 			parse_bestmove(line.split(" ", true, 1)[1])
 		elif (sent_isready) && (line == "readyok" || line.begins_with("Stockfish [commit: ")):
 			sent_isready = false
@@ -88,9 +93,14 @@ class Stockfish:
 			if game.move(tokens[0]):
 				var bm = game.undo()
 				emit_signal("bestmove", bm)
+				return
 		emit_signal("bestmove", null)
 
-	func go(depth: int = 15):
+	func go(depth: int = 15) -> void:
+		if searching_bestmove:
+			push_error("already searching. did you mean `stop()`?")
+			return
+		searching_bestmove = true
 		var command := PoolStringArray(["go"])
 		command.append("depth")
 		command.append(str(depth))
