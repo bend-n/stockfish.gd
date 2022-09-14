@@ -8,7 +8,7 @@ func load_stockfish() -> Stockfish:
 		return null
 	if OS.has_feature("JavaScript"):
 		var f = File.new()
-		f.open("res://addons/stockfish.gd/load.js")
+		f.open("res://addons/stockfish.gd/load.js", File.READ)
 		JavaScript.eval(f.get_as_text())
 		f.close()
 		return JSStockfish.new()
