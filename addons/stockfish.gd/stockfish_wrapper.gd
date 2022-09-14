@@ -1,0 +1,93 @@
+
+class_name Stockfish
+extends Reference
+
+var game: Chess setget set_game
+var sent_isready := false
+var engine_ready := false
+var call_queue := PoolStringArray()
+var searching_bestmove := false
+
+signal engine_ready
+signal line_recieved
+signal load_failed
+signal bestmove
+
+func send_line(cmd: String) -> void:
+    if not engine_ready:
+        call_queue.append(cmd)
+        return
+    dbg_prints("%s --> stockfish" % cmd)
+    _send_line(cmd)
+
+# @override
+func _send_line(cmd: String) -> void:
+    pass
+
+func _init() -> void:
+    connect("line_recieved", self, "_line_recieved")
+    connect("engine_ready", self, "_engine_ready")
+
+func dbg_prints(a1 := "", a2 := "") -> void:
+    if OS.is_debug_build():
+        prints(a1, a2)
+
+func _engine_ready() -> void:
+    engine_ready = true
+    for call in call_queue:
+        send_line(call)
+    call_queue.resize(0)
+
+func set_game(new_game: Chess) -> void:
+    game = new_game
+    send_line("ucinewgame")
+    _position()
+
+func _position():
+    var command := PoolStringArray(["position", "startpos"])
+    if game.__history:
+        command.append("moves")
+        for history in game.__history:
+            command.append(Chess.move_to_uci(history.move))
+
+    send_line(command.join(" "))
+
+func _line_recieved(line: String) -> void:
+    if line.begins_with("info "):
+        dbg_prints("(stockfish)", line)
+    elif searching_bestmove and line.begins_with("bestmove "):
+        searching_bestmove = false
+        parse_bestmove(line.split(" ", true, 1)[1])
+    elif (sent_isready) && (line == "readyok" || line.begins_with("Stockfish [commit: ")):
+        sent_isready = false
+        emit_signal("engine_ready")
+    else:
+        push_error("unexpected output: %s" % line)
+
+func parse_bestmove(args: String) -> void:
+    var tokens = args.split(" ")
+    if tokens and not tokens[0] in ["(none)", "NULL"]:
+        if game.move(tokens[0]):
+            var bm = game.undo()
+            emit_signal("bestmove", bm)
+            return
+    emit_signal("bestmove", null)
+
+func go(depth: int = 15) -> void:
+    if searching_bestmove:
+        push_error("already searching. did you mean `stop()`?")
+        return
+    searching_bestmove = true
+    var command := PoolStringArray(["go"])
+    command.append("depth")
+    command.append(str(depth))
+    send_line(command.join(" "))
+
+func stop() -> void:
+    send_line("stop")
+
+
+func kill() -> void:
+    send_line("quit")
+    engine_ready = false # stop any calls from being sent
+    # can not free self. will crash

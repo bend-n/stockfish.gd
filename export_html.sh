@@ -17,7 +17,7 @@ function install_libs() {
 
 [[ -d exports ]] && rm -rf exports
 mkdir exports
-[[ -f web/load.js ]] && uglifyjs web/load.js >addons/stockfish.gd/load.js
+
 godot --no-window --export "HTML5" exports/index.html
 cd exports
 install_libs

@@ -1,6 +1,6 @@
 extends Node
 
-var fish: StockfishLoader.Stockfish
+var fish: Stockfish
 
 
 func _ready() -> void:
