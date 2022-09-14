@@ -979,7 +979,7 @@ func __move_from_san(move, sloppy := false) -> Dictionary:
 
 func __move_from_uci(uci: String) -> Dictionary:
 	if len(uci) <= 5 and len(uci) >= 4:
-		var to: int = SQUARE_MAP[uci.substr(2, 4)]
+		var to: int = SQUARE_MAP[uci.substr(2, 2)]
 		var from: int = SQUARE_MAP[uci.substr(0, 2)]
 		var flags = BITS.NORMAL
 		if board[to]:
@@ -994,7 +994,7 @@ func __move_from_uci(uci: String) -> Dictionary:
 			for offset in offsets:
 				if from + offset == to and to == ep_square:
 					flags = BITS.EP_CAPTURE
-		return __build_move(from, to, flags, uci[5] if len(uci) == 5 else "")
+		return __build_move(from, to, flags, uci[4] if len(uci) == 5 else "")
 
 	return {}
 
