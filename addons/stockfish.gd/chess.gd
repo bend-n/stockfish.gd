@@ -218,9 +218,7 @@ func piece_moves(_square_: String, piece: String, color := turn, localize := tru
 	return moves
 
 
-static func __add_piece_move(
-	moves: Array, from: int, to: int, piece: String, flags := BITS.NORMAL
-) -> void:
+static func __add_piece_move(moves: Array, from: int, to: int, piece: String, flags := BITS.NORMAL) -> void:
 	var mov = {from = from, to = to, flags = flags}
 	if piece == PAWN && (rank(to) == RANK_8 || rank(to) == RANK_1):
 		for p in [QUEEN, ROOK, BISHOP, KNIGHT]:
@@ -234,9 +232,7 @@ static func __add_piece_move(
 
 # Please only use the returned object if the team the move was created for is the current turn.
 func localize_piece_move(piece_move: Dictionary) -> Dictionary:
-	return __build_move(
-		piece_move.from, piece_move.to, piece_move.flags, piece_move.get("promotion", "")
-	)
+	return __build_move(piece_move.from, piece_move.to, piece_move.flags, piece_move.get("promotion", ""))
 
 
 ###
@@ -827,11 +823,7 @@ func __make_move(move: Dictionary):
 	ep_square = (move.to + (-16 if turn == BLACK else 16)) if move.flags & BITS.BIG_PAWN else EMPTY
 
 	# reset the 50 move counter if a pawn is moved or a piece is captured
-	half_moves = (
-		0
-		if move.piece == PAWN or move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE)
-		else (half_moves + 1)
-	)
+	half_moves = (0 if move.piece == PAWN or move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE) else (half_moves + 1))
 
 	fullmoves += 1 if turn == BLACK else 0
 	turn = __swap_color(turn)
@@ -987,15 +979,17 @@ func __move_from_san(move, sloppy := false) -> Dictionary:
 
 func __move_from_uci(uci: String) -> Dictionary:
 	if len(uci) <= 5:
+		var to: int = SQUARE_MAP[uci.substr(2, 4)]
+		var from: int = SQUARE_MAP[uci.substr(0, 2)]
 		var flags = BITS.NORMAL
-		if board[SQUARE_MAP[uci.substr(2, 4)]]:
+		if board[to]:
 			flags = BITS.CAPTURE
-		return __build_move(
-			SQUARE_MAP[uci.substr(0, 2)],
-			SQUARE_MAP[uci.substr(2, 4)],
-			flags,
-			uci[5] if len(uci) == 5 else ""
-		)
+		if board[from].get("type", "") == KING:
+			if from + 2 == to:
+				flags = BITS.KSIDE_CASTLE
+			if from - 2 == to:
+				flags = BITS.QSIDE_CASTLE
+		return __build_move(from, to, flags, uci[5] if len(uci) == 5 else "")
 
 	return {}
 
@@ -1042,12 +1036,7 @@ func perft(depth: int) -> int:
 
 
 func in_draw():
-	return (
-		half_moves >= 50
-		|| in_stalemate()
-		|| insufficient_material()
-		|| in_threefold_repetition()
-	)
+	return half_moves >= 50 || in_stalemate() || insufficient_material() || in_threefold_repetition()
 
 
 func game_over():
@@ -1075,9 +1064,7 @@ func moves(options := {}):
 		if "verbose" in options && options.verbose:
 			moves.append(__make_pretty(ugly_move))
 		elif "stripped" in options && options.stripped:
-			moves.append(
-				stripped_san(__move_to_san(ugly_move, __generate_moves({legal = true}), false))
-			)
+			moves.append(stripped_san(__move_to_san(ugly_move, __generate_moves({legal = true}), false)))
 		else:
 			moves.append(__move_to_san(ugly_move, __generate_moves({legal = true})))
 	return moves
