@@ -1,6 +1,6 @@
 {
   "name": "@bendn/stockfish.gd",
-  "version": "2.0.0",
+  "version": "2.1.2",
   "description": "godot stockfish",
   "main": "stockfish_loader.gd",
   "scripts": {
